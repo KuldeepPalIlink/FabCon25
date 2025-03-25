@@ -6,6 +6,8 @@ const START_TIMER_SEC = 5;
 const QUESTION_TIMER_SEC = 30;
 const QUIZ_TIMER_SEC = 60;
 const ABLY_API_KEY = process.env.ABLY_API_KEY;
+const AZURE_FUNCTION_BASE_URL = 'https://fabchallenge-cucccfgvamhvehd5.westus3-01.azurewebsites.net/api/trivia_questions_generator'; // Base URL for your Azure Function
+const AZURE_FUNCTION_CODE = 'TnXLCynuxy2u0goTdjCZ0rBr4me_5x9eHyIUhouz9g_DAzFuT_8v8Q=='; // Your Azure Function code
 const globalPlayersState = {};
 const playerChannels = {};
 let didQuizStart = false;
