@@ -21,7 +21,7 @@ let quizRoomChannel;
 let numPlayersAnswered = 0;
 let customQuestions = [];
 let skipTimer = false;
-let answerTime=0;
+let answerTime=1;
 let finalScore = false;
 console.log('this is the worker thread');
 console.log('room code is' + workerData.hostRoomCode);
