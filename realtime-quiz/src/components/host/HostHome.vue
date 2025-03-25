@@ -25,16 +25,16 @@
           questions via their mobile browsers for best experience.
         </p>
         <template v-if="!isSmallWidth">
-          <button
+          <!-- <button
             class="btn"
             id="btn-1"
             type="submit"
             @click="setQuizType('CustomQuiz')"
           >
             Create your own quiz
-          </button>
+          </button> -->
           <button class="btn" type="submit" @click="setQuizType('RandomQuiz')">
-            Host a randomly chosen quiz
+            Start Quiz
           </button>
         </template>
         <template v-if="isSmallWidth">

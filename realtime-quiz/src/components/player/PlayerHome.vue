@@ -21,6 +21,13 @@
               v-model="myNickname"
               @keyup.enter="enterRoomWithNickname()"
             />
+            <input
+              class="form-control host-nickname"
+              id="host-nickname"
+              placeholder="Enter company Name"
+              v-model="myCompanyname"
+              @keyup.enter="enterRoomWithNickname()"
+            />
             <button
               type="button create-random-btn"
               class="btn"
@@ -41,6 +48,9 @@
             <small class="text-muted"
               >Waiting for your host, <strong>{{ hostNickname }}</strong
               >, to start the quiz</small
+            >
+            <small v-if="hostQuizMode" class="text-muted"
+              > or quiz will automatically start in <strong>{{ formattedRemainingTime }}</strong></small
             >
           </div>
         </template>
@@ -135,6 +145,7 @@ export default {
       headerLogo:
         'https://static.ably.dev/logo-h-white.svg?realtime-quiz-framework',
       myNickname: '',
+      myCompanyname:'',
       myAvatarColor: null,
       didPlayerEnterRoom: false,
       onlinePlayersArr: [],
@@ -159,18 +170,32 @@ export default {
       numAnswered: 0,
       numPlaying: 0,
       leaderboard: null,
-      showFinalScreen: false
+      showFinalScreen: false,
+      hostQuizMode:false,
+      remainingTime: 180
     };
+  },
+  computed: {
+    formattedRemainingTime() {
+      if (isNaN(this.remainingTime)) {
+        return '0 min 0 sec';
+      }
+      const minutes = Math.floor(this.remainingTime / 60);
+      const seconds = this.remainingTime % 60;
+      return `${minutes} min ${seconds} sec`;
+    }
   },
   methods: {
     subscribeToQuizRoomChEvents() {
       this.myQuizRoomCh.subscribe('new-player', msg => {
         this.handleNewPlayerEntered(msg);
       });
+    
       this.myQuizRoomCh.subscribe('start-quiz-timer', msg => {
         this.didHostStartGame = true;
         this.timer = msg.data.countDownSec;
       });
+
       this.myQuizRoomCh.subscribe('new-question', msg => {
         this.handleNewQuestionReceived(msg);
       });
@@ -180,6 +205,10 @@ export default {
           this.questionTimer = 30;
         }
       });
+      this.myQuizRoomCh.subscribe('quiz-timer-update', msg => {
+        this.remainingTime = msg.data.countDownSec;
+      });
+      
       this.myQuizRoomCh.subscribe('correct-answer', msg => {
         this.handleCorrectAnswerReceived(msg);
       });
@@ -195,11 +224,17 @@ export default {
       });
     },
     handleNewPlayerEntered(msg) {
-      let { clientId, nickname, avatarColor } = msg.data.newPlayerState;
+      let { clientId, nickname, avatarColor, isHost, quizType, quizCategory, quizMode, totalQuizPlayers,hostRoomCode } = msg.data.newPlayerState;
       this.onlinePlayersArr.push({
-        clientId,
-        nickname,
-        avatarColor
+          clientId,
+          nickname,
+          avatarColor,
+          isHost,
+          quizType,
+          quizCategory,
+          quizMode,
+          totalQuizPlayers,
+          hostRoomCode
       });
     },
     handleNewQuestionReceived(msg) {
@@ -241,12 +276,6 @@ export default {
       );
     },
     enterRoomWithNickname() {
-      this.myQuizRoomCh.presence.enter({
-        nickname: this.myNickname,
-        avatarColor: this.myAvatarColor,
-        isHost: false
-      });
-      this.didPlayerEnterRoom = true;
       this.getExistingPresenceSet();
       this.subscribeToQuizRoomChEvents();
       this.setUpMyChannel();
@@ -255,16 +284,33 @@ export default {
       this.myQuizRoomCh.presence.get((err, players) => {
         if (!err) {
           for (let i = 0; i < players.length; i++) {
-            let { nickname, avatarColor, isHost } = players[i].data;
+            let { nickname,companyName, avatarColor, isHost, quizType, quizCategory, quizMode, totalQuizPlayers } = players[i].data;
             if (!isHost) {
               this.onlinePlayersArr.push({
                 clientId: players[i].clientId,
                 nickname: nickname,
+                companyName:companyName,
                 avatarColor: avatarColor,
-                isHost: isHost
+                isHost: isHost,
+                quizType:quizType,
+                quizCategory:quizCategory,
+                quizMode:quizMode,
+                totalQuizPlayers:totalQuizPlayers
               });
             } else {
+              this.myQuizRoomCh.presence.enter({
+               nickname: this.myNickname,
+              avatarColor: this.myAvatarColor,
+              companyName: this.myCompanyname,
+              isHost: false,
+              quizType:quizType,
+              quizCategory:quizCategory,
+              quizMode:quizMode,
+              totalQuizPlayers:totalQuizPlayers
+          });
+              this.didPlayerEnterRoom = true;
               this.hostNickname = nickname;
+              this.hostQuizMode = quizMode;
             }
           }
         } else {

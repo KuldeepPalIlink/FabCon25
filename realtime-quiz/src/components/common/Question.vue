@@ -94,11 +94,12 @@ export default {
         this.myInputCh.publish('player-answer', {
           questionIndex: this.newQuestionNumber - 1,
           playerAnswerIndex: index,
-          choice: choice
+          choice: choice,
+          timmer:
         });
       }
+    },
     }
-  }
 };
 </script>
 
